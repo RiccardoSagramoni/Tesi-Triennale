@@ -1,0 +1,40 @@
+\documentclass[a4paper,12pt]{report}
+\usepackage[T1]{fontenc}				% codifica dei font
+\usepackage[utf8]{inputenc}				% lettere accentate da tastiera
+\usepackage[english, italian]{babel}	% lingue del documento
+\usepackage{url}						% per scrivere gli indirizzi internet
+\usepackage[italian]{varioref}			% riferimenti completi
+\usepackage{indentfirst}				% rientro prima riga del capoverso
+\usepackage{microtype}					% migliora riempimento righe
+\usepackage{setspace}					% comandi per interlinea
+
+%Margini e interlinea
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\pagestyle{plain}
+\onehalfspacing
+
+% Impostazioni bibliografia
+\usepackage[autostyle,italian=guillemets]{csquotes}
+\usepackage[backend=biber]{biblatex}
+\addbibresource{references.bib}
+
+\title{Prova}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\chapter{Meltdown e il sistema di protezione KAISER}
+
+\chapter{Introduzione al kernel utilizzato}
+
+\chapter{L'implementazione del sistema di protezione}
+Ciao \cite{Lipp:meltdown}\cite{Gruss:kaslr}
+
+\printbibliography[heading=bibintoc]
+
+\end{document}

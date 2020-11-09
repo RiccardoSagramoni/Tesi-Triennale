@@ -1,0 +1,7 @@
+*.log
+*.aux
+*.gz
+*.blg
+*.bbl
+*.bcf
+*.xml
