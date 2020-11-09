@@ -1,3 +1,4 @@
+%\documentclass[a4paper,12pt, twoside, openright]{report}
 \documentclass[a4paper,12pt]{report}
 \usepackage[T1]{fontenc}				% codifica dei font
 \usepackage[utf8]{inputenc}				% lettere accentate da tastiera
@@ -7,33 +8,43 @@
 \usepackage{indentfirst}				% rientro prima riga del capoverso
 \usepackage{microtype}					% migliora riempimento righe
 \usepackage{setspace}					% comandi per interlinea
+\usepackage{pdfpages}					% per includere frontespizio.pdf
+\usepackage{lipsum}	%TODO to remove
 
-%Margini e interlinea
-\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
-\pagestyle{plain}
+% Margini e interlinea
+\usepackage[top=1in, bottom=1in, inner=1.2in, outer=1in]{geometry}
 \onehalfspacing
+
+% Struttura documento
+\usepackage{frontespizio}
 
 % Impostazioni bibliografia
 \usepackage[autostyle,italian=guillemets]{csquotes}
 \usepackage[backend=biber]{biblatex}
 \addbibresource{references.bib}
 
-\title{Prova}
-
 \begin{document}
 
-\maketitle
+% Il frontespizio viene importato da un file pdf con una singola pagina
+% generato con un file .tex separato
+\begin{titlepage}
+	\thispagestyle{empty}
+	\includepdf{sezioni-tesi/frontespizio/frontespizio-frn.pdf}
+	\thispagestyle{empty}	% non numerare questa pagina
+	\cleardoublepage
+\end{titlepage}	
 
 \begin{abstract}
-
+\lipsum[1]
 \end{abstract}
 
-\chapter{Meltdown e il sistema di protezione KAISER}
+\tableofcontents
 
-\chapter{Introduzione al kernel utilizzato}
+\include{sezioni-tesi/meltdown}
 
-\chapter{L'implementazione del sistema di protezione}
-Ciao \cite{Lipp:meltdown}\cite{Gruss:kaslr}
+\include{sezioni-tesi/nucleo}
+
+\include{sezioni-tesi/implementazione}
 
 \printbibliography[heading=bibintoc]
 
