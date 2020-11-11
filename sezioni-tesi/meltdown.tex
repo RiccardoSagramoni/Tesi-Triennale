@@ -21,8 +21,8 @@ Meltdown rompe quindi tutti i meccanismi di sicurezza che si basano sull'isolame
 \label{sec:spazi-di-indirizzamento}
 \begin{figure}
 	\centering
-	\includegraphics[width=0.5\textwidth]{"img/memoria-fisica.pdf"}
-	\caption{text} % TODO
+	\includegraphics[width=0.7\textwidth]{"img/memoria-fisica.pdf"}
+	\caption{Ogni indirizzo fisico del processo è mappato sia nello spazio d'indirizzamento utente che in quello kernel all'interno della finestra di memoria fisica}
 	\label{fig:memoria-fisica}
 \end{figure}
 
@@ -30,7 +30,7 @@ Per risolvere diversi problemi, in particolare l'isolamento dei processi \cite{l
 Lo spazio d'indirizzamento di un processo (ovvero tutti i possibili indirizzi che un processo può generare) viene suddiviso in regioni dette \emph{pagine} che possono essere mappate individualmente nella memoria fisica attraverso una tabella di traduzione multivello. 
 Ogni processo possiede una propria tabella di traduzione che traduce tutti e soli i suoi indirizzi virtuali e che definisce le proprietà di protezione delle varie zone di memoria. 
 
-Ogni processo può quindi riferirsi esclusivamente agli indirizzi appartenenti al proprio spazio di indirizzamento virtuale. Per permettere l'utilizzo 
+Per permettere ad ogni processo di usufruire delle primitive di sistema offerte dal kernel e alle routine di sistema di accedere liberamente all'intera memoria fisica (ad esempio per modificare le tabelle di traduzione di un processo), si utilizza una traduzione, denominata \emph{finestra di memoria fisica}, che mappi l'intera memoria fisica, compresi il kernel e lo spazio di memoria di tutti i processi, nello spazio di indirizzamento accessibile solo da livello privilegiato (figura \vref{fig:memoria-fisica})~\cite{lettieri:paginazione-complementi}.
 
 
 \subsection{Attacchi Cache}
@@ -68,10 +68,7 @@ L'utilizzo del valore segreto moltiplicato per la dimensione della pagina, ci ga
 Ciò previene il fatto che il prefetcher hardware (per ragioni di ottimizzazione) potrebbe caricare in cache anche le locazioni di memoria adiacenti a quella acceduta, rendendo impossibile determinare quale locazione di memoria sarebbe stata indirizzata se non fosse stato utilizzato a priori questo accorgimento.
 
 \subsection{Passo 3: Ricevere il segreto}
-Dopo che la sequenza di istruzioni del passo 2 è stata eseguita, in cache è presente esattamente una linea di memoria del probe array.
-L'offset di questa linea è dipendente esclusivamente dal valore segreto presente nell'arbitaria locazione di memoria protetta.
-Grazie a ciò, l'attaccante può effettuare un'attacco Flush+Reload~\cite{yaron:flush-reload}, iterando attraverso le 256 pagine del probe array e misurando il tempo di accesso per il primo elemento di ogni pagina (vedi figura \vref{fig:probe-array}).
-In base a quanto detto finora, la pagina con la latenza minore è l'unica presente in memoria cache e il numero della pagina è il valore segreto letto dalla memoria protetta.
+\label{sec:meltdown-passo-3}
 
 \begin{figure}
 	\centering
@@ -79,6 +76,11 @@ In base a quanto detto finora, la pagina con la latenza minore è l'unica presen
 	\caption{Tempo di accesso alle 256 pagine del probe array. Il grafico mostra una \emph{cache hit} sulla pagina acceduta nel passo~2.~\cite{lipp:meltdown}}
 	\label{fig:probe-array}
 \end{figure}
+
+Dopo che la sequenza di istruzioni del passo 2 è stata eseguita, in cache è presente esattamente una linea di memoria del probe array.
+L'offset di questa linea è dipendente esclusivamente dal valore segreto presente nell'arbitaria locazione di memoria protetta.
+Grazie a ciò, l'attaccante può effettuare un'attacco Flush+Reload~\cite{yaron:flush-reload}, iterando attraverso le 256 pagine del probe array e misurando il tempo di accesso per il primo elemento di ogni pagina (vedi figura \ref{fig:probe-array}).
+In base a quanto detto finora, la pagina con la latenza minore è l'unica presente in memoria cache e il numero della pagina è il valore segreto letto dalla memoria protetta.
 
 
 \subsection{Conclusioni}
@@ -101,19 +103,38 @@ movq (%rbx, %rax), %rbx  # Trasmissione del segreto
 \end{lstlisting} 
 
 Meltdown è quindi in grado di leggere in maniera arbitraria dati presenti in memoria \emph{protetta}, ad esempio nello spazio di indirizzamento kernel. 
-L'efficienza di Meltdown si basa principalmente sull'esistente \emph{race condition} tra il lancio dell'eccezione di protezione e il passo 2 del nostro attacco (vedi paragrafo \vref{sec:meltdown-passo-2}). Per questo motivo, sono previsti alcuni accorgimenti e ottimizzazioni ulteriori non significativi per la nostra trattazione e per le quali rimando a \textcite{lipp:meltdown}.
+L'efficienza di Meltdown si basa principalmente sull'esistente \emph{race condition} tra il lancio dell'eccezione di protezione e il passo 2 del nostro attacco (vedi paragrafo \vref{sec:meltdown-passo-2}). Per questo motivo, sono previsti alcuni accorgimenti e ottimizzazioni ulteriori non significativi per la nostra trattazione e per le quali rimandiamo a \textcite{lipp:meltdown}.
 
 Dato che l'intera memoria fisica viene mappata all'interno dello spazio di indirizzamento del kernel attraverso la cosiddetta \emph{finestra di memoria fisica}~\cite{lettieri:paginazione-complementi}, Meltdown è in grado non solo di leggere le zone di memoria relative al kernel, ma anche gli spazi di memoria di tutti gli altri processi. In base a quanto rilevato da \textcite{lipp:meltdown}, Meltdown è in grado di effettuare il dump dell'intera memoria fisica fino ad una velocità di 503 KB/s.
 
 %%
 \section{Il sistema di protezione KAISER}
 KAISER, proposto da \textcite{gruss:kaslr}, è una modifica del nucleo in cui il kernel non viene mappato nello spazio virtuale dei processi utente.
-Questa modifica era stata pensata per prevenire attacchi side-channel contro la misura di protezione KASLR \cite{hund:practical-timing-side-channel, gruss:prefetch-side-channel-attacks, jang:breaking-kaslr}, ma ha l'importante effetto secondario di prevenire Meltdown~\cite{lipp:meltdown}
+Questa modifica era stata pensata per prevenire attacchi side-channel contro la misura di protezione KASLR \cite{hund:practical-timing-side-channel, gruss:prefetch-side-channel-attacks, jang:breaking-kaslr}, ma ha l'importante effetto secondario di prevenire Meltdown~\cite{lipp:meltdown}.
 
-L'idea alla base di KAISER è quella di separare lo spazio di memoria kernel da quello utente, ovvero di rendere disponibile la traduzione degli indirizzi virtuali del kernel soltanto quando il sistema si trova in modalità privilegiata.
+L'idea alla base di KAISER è quella di separare lo spazio di memoria kernel da quello utente, ovvero di rendere disponibile la traduzione degli indirizzi virtuali del kernel \emph{soltanto} quando il sistema si trova in modalità privilegiata.
 Ciò previene Meltdown in quanto, quando il sistema sta eseguendo il programma utente della sezione \vref{sec:meltdown-conclusioni}, l'indirizzo virtuale scelto non è presente nell'albero di traduzione del processo attaccante e quindi la CPU non è in grado di accedervi neanche in maniera speculativa.
+Il meccanismo proposto da \citeauthor{gruss:kaslr} è quindi ritenuto la miglior soluzione a breve termine per proteggere i sistemi informatici da Meldown~\cite{lipp:meltdown}.
 
+KAISER introduce il concetto di \textbf{spazi d'indirizzamento shadow} per garantire l'isolamento della memoria kernel. 
+Come mostrato in figura \vref{fig:memoria-shadow}, ogni processo possiede due spazi di indirizzi: uno spazio d'indirizzamento shadow, in cui è mappato solo lo spazio di memoria utente e una porzione del kernel necessaria per le interruzioni, e uno spazio d'indirizzamento in cui è mappato sia l'intero kernel che lo spazio utente, protetto con Supervisor Mode Access Prevention (SMAP) e Supervisor Mode Execution Prevention (SMEP) per combatibilità con x86 Linux~\cite{gruss:kaslr}.
 
+Ogni qualvolta che il programma passerà da livello utente a livello sistema (ad esempio attraverso una primitiva di sistema o il lancio di un'interruzione) e viceversa, la CPU dovrà aggiornare il registro CR3 con il valore della tabella di livello 4 corrispondente al nuovo livello di privilegio (tabella shadow per il livello utente e tabella kernel per il livello sistema). 
+Sarà dunque necessario implementare una o più funzioni (le \emph{funzioni trampolino}), mappate in memoria shadow, dedicate all'aggiornamento corretto del registro CR3 ad ogni modifica del livello di privilegio.
 
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{"img/memoria-shadow.pdf"}
+	\caption{(a) Il kernel è mappato nella memoria virtuale di ogni processo. (b) TODO}
+	\label{fig:memoria-shadow}
+\end{figure}
 
-
+Come accennato sopra, nell'architettura x86 sono necessarie alcune porzioni del kernel per il corretto funzionamento delle interruzioni e devono perciò essere mappate nello spazio di indirizzamento shadow:
+\begin{itemize}
+	\item la Interrupt Descriptor Table (IDT);
+	\item la Global Descriptor Table (GDT);
+	\item i Task State Segment (TSS);
+	\item la pila sistema del processo;
+	\item la pila e il vettore delle richieste di interruzioni;
+	\item il codice di entrata e uscita dagli interrupt handler.
+\end{itemize}
