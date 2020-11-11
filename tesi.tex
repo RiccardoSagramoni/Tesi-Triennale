@@ -9,7 +9,7 @@
 \usepackage{microtype}					% migliora riempimento righe
 \usepackage{setspace}					% comandi per interlinea
 \usepackage{pdfpages}					% per includere frontespizio.pdf
-\usepackage{lipsum}	%TODO to remove
+\usepackage{amsmath}
 
 % Margini e interlinea
 \usepackage[top=1.2in, bottom=1.2in, inner=1.5in, outer=1.2in]{geometry}
@@ -17,6 +17,30 @@
 
 % Struttura documento
 \usepackage{frontespizio}
+
+% Codice
+\usepackage{listings}
+\usepackage{xcolor}			% Colori
+\usepackage{inconsolata} 	% Font Consolas per il codice (monospace)
+
+\lstdefinelanguage[x64]{Assembler}[x86masm]{Assembler} {
+	morekeywords={
+		movq, movb,
+		rax,rdx,rcx,rbx,rsi,rdi,rsp,rbp, %
+		r8,r8d,r8w,r8b,r9,r9d,r9w,r9b, %
+		r10,r10d,r10w,r10b,r11,r11d,r11w,r11b, %
+		r12,r12d,r12w,r12b,r13,r13d,r13w,r13b, %
+		r14,r14d,r14w,r14b,r15,r15d,r15w,r15b %
+	},
+	morecomment=[l]{\#},
+	sensitive=false
+}
+
+\lstset{
+	language=[x64]Assembler,
+	basicstyle=\ttfamily\onehalfspacing,
+	keywordstyle=\bf
+}
 
 % Impostazioni bibliografia
 \usepackage[autostyle,italian=guillemets]{csquotes}
