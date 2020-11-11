@@ -1,5 +1,5 @@
-%\documentclass[a4paper,12pt, twoside, openright]{report}
-\documentclass[a4paper,12pt]{report}
+\documentclass[a4paper,12pt, twoside, openright]{report}
+%\documentclass[a4paper,12pt]{report}
 \usepackage[T1]{fontenc}				% codifica dei font
 \usepackage[utf8]{inputenc}				% lettere accentate da tastiera
 \usepackage[english, italian]{babel}	% lingue del documento
@@ -46,11 +46,19 @@
 \usepackage[autostyle,italian=guillemets]{csquotes}
 \usepackage[backend=biber]{biblatex}
 \addbibresource{references.bib}
+\setcounter{biburlnumpenalty}{9000}
+\setcounter{biburlucpenalty}{9000}
+\setcounter{biburllcpenalty}{9000}
+
+% Segnalibri e collegamenti
+\usepackage[bookmarks]{hyperref}
+\usepackage{bookmark}
 
 \begin{document}
 
 % Il frontespizio viene importato da un file pdf con una singola pagina
 % generato con un file .tex separato
+\phantomsection
 \begin{titlepage}
 	\thispagestyle{empty}
 	\includepdf{sezioni-tesi/frontespizio/frontespizio-frn.pdf}
@@ -68,6 +76,9 @@
 
 \include{sezioni-tesi/implementazione}
 
-\printbibliography[heading=bibintoc]
+\cleardoublepage
+\phantomsection
+\addcontentsline{toc}{chapter}{\bibname}
+\printbibliography
 
 \end{document}

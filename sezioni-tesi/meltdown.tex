@@ -47,7 +47,7 @@ L'attacco Meltdown consiste in tre passi fondamentali \cite{lipp:meltdown}:
 	\item Usare un'attacco di tipo Flush+Reload per determinare il contenuto segreto in base a quale linea di memoria è stata acceduta
 \end{enumerate}
 
-\subsection{Passo 1: Leggere del segreto}
+\subsection{Passo 1: Leggere il segreto}
 Nel prima passo di Meltdown, l'attaccante cerca di accedere ad una zona di memoria protetta, ad esempio la memoria kernel.
 Il tentativo di accesso ad una pagina non accessibile da livello utente fa in modo che la CPU sollevi un'eccezione di protezione, che generalmente termina il processo. 
 Tuttavia, a causa dell'esecuzione fuori ordine, la CPU potrebbe aver già eseguito l'istruzione di accesso in maniera speculativa \emph{prima} delle istruzioni relative all'eccezione di protezione, al fine di minimizzare i tempi di latenza (vedi paragrafo \ref{sec:esecuzione-fuori-ordine}).
@@ -56,6 +56,7 @@ In questo modo la CPU accederebbe in maniera speculativa alla locazione di memor
 Grazie al lancio dell'eccezione, le eventuali istruzioni eseguite in maniera speculativa, che non sarebbero docute essere eseguite in quanto relative ad una previsione di salto \emph{errata}, non vengono \emph{ritirate} dalla CPU e non hanno così alcun effetto sulla macroarchitettura in generale (memoria centrale e registri logici non speculativi del processore) \cite{frosini:calcolatori2}.
 
 \subsection{Passo 2: Trasmettere il segreto}
+\label{sec:meltdown-passo-2}
 Per poter trasmettere il segreto, si utilizza un \emph{probe array}, di dimensione pari a 256 pagine virtuali e allocato precedentemente nella memoria del processo attaccante, assicurandosi che \emph{nessuna porzione dell'array sia presente nella cache}. 
 La sequenza di transient instruction contiene un accesso ad un elemento del probe array, il cui offset è calcolato moltiplicando il valore del byte per la dimensione di una pagina virtuale (tipicamente e nel nostro sistema  è \emph{4KB}~\cite{lettieri:paginazione}).
 
@@ -66,8 +67,7 @@ Durante l'esecuzione speculativa, infatti, la locazione di memoria all'interno d
 L'utilizzo del valore segreto moltiplicato per la dimensione della pagina, ci garantisce sia una precisa \emph{correlazione} tra il valore segreto e la locazione caricata in memoria, sia che a differenti valori della locazione di memoria saranno accedute differenti \emph{pagine} del probe array.
 Ciò previene il fatto che il prefetcher hardware (per ragioni di ottimizzazione) potrebbe caricare in cache anche le locazioni di memoria adiacenti a quella acceduta, rendendo impossibile determinare quale locazione di memoria sarebbe stata indirizzata se non fosse stato utilizzato a priori questo accorgimento.
 
-\subsection{Passo 3: Ricevere del segreto}
-
+\subsection{Passo 3: Ricevere il segreto}
 Dopo che la sequenza di istruzioni del passo 2 è stata eseguita, in cache è presente esattamente una linea di memoria del probe array.
 L'offset di questa linea è dipendente esclusivamente dal valore segreto presente nell'arbitaria locazione di memoria protetta.
 Grazie a ciò, l'attaccante può effettuare un'attacco Flush+Reload~\cite{yaron:flush-reload}, iterando attraverso le 256 pagine del probe array e misurando il tempo di accesso per il primo elemento di ogni pagina (vedi figura \vref{fig:probe-array}).
@@ -76,35 +76,44 @@ In base a quanto detto finora, la pagina con la latenza minore è l'unica presen
 \begin{figure}
 	\centering
 	\includegraphics[width=0.75\textwidth]{"img/probe-array.pdf"}
-	\caption{Tempo di accesso alle 256 pagine del probe-array. Il grafico mostra una \emph{cache hit} sulla pagina acceduta nel passo~2.~\cite{lipp:meltdown}} % TODO
+	\caption{Tempo di accesso alle 256 pagine del probe array. Il grafico mostra una \emph{cache hit} sulla pagina acceduta nel passo~2.~\cite{lipp:meltdown}}
 	\label{fig:probe-array}
 \end{figure}
 
 
 \subsection{Conclusioni}
+\label{sec:meltdown-conclusioni}
+Il seguente codice mostra in Assembly x86-64 la sequenza di istruzioni alla base di Meltdown, relative ai passi 1 e 2 dell'attacco.
 
 \begin{lstlisting}[
-		language={[x64]Assembler}, float, frame=single,
-		numbers=left, numbersep=7pt,
-		caption=La sequenza di istruzioni alla base di Meltdown,
-		label=lst:meltdown,
-		xleftmargin=18.5pt,
-		xrightmargin=-18.5pt,
-		framexleftmargin=13pt,
-		framexrightmargin=-20.5pt
+	language={[x64]Assembler}, frame=single,
+	numbers=left, numbersep=7pt,
+	xleftmargin=18.5pt,
+	xrightmargin=-18.5pt,
+	framexleftmargin=13pt,
+	framexrightmargin=-20.5pt
 	]
 # rcx = indirizzo di memoria kernel
 # rbx = probe array
 movb (%rcx), %al         # Lettura del segreto
 shl  $12, %rax           # Traslazione dell'offset
 movq (%rbx, %rax), %rbx  # Trasmissione del segreto
-\end{lstlisting}
+\end{lstlisting} 
 
-Il codice presente nel listato \ref{lst:meltdown} mostra in Assembly x86-64
+Meltdown è quindi in grado di leggere in maniera arbitraria dati presenti in memoria \emph{protetta}, ad esempio nello spazio di indirizzamento kernel. 
+L'efficienza di Meltdown si basa principalmente sull'esistente \emph{race condition} tra il lancio dell'eccezione di protezione e il passo 2 del nostro attacco (vedi paragrafo \vref{sec:meltdown-passo-2}). Per questo motivo, sono previsti alcuni accorgimenti e ottimizzazioni ulteriori non significativi per la nostra trattazione e per le quali rimando a \textcite{lipp:meltdown}.
+
+Dato che l'intera memoria fisica viene mappata all'interno dello spazio di indirizzamento del kernel attraverso la cosiddetta \emph{finestra di memoria fisica}~\cite{lettieri:paginazione-complementi}, Meltdown è in grado non solo di leggere le zone di memoria relative al kernel, ma anche gli spazi di memoria di tutti gli altri processi. In base a quanto rilevato da \textcite{lipp:meltdown}, Meltdown è in grado di effettuare il dump dell'intera memoria fisica fino ad una velocità di 503 KB/s.
 
 %%
+\section{Il sistema di protezione KAISER}
+KAISER, proposto da \textcite{gruss:kaslr}, è una modifica del nucleo in cui il kernel non viene mappato nello spazio virtuale dei processi utente.
+Questa modifica era stata pensata per prevenire attacchi side-channel contro la misura di protezione KASLR \cite{hund:practical-timing-side-channel, gruss:prefetch-side-channel-attacks, jang:breaking-kaslr}, ma ha l'importante effetto secondario di prevenire Meltdown~\cite{lipp:meltdown}
 
-Come abbiamo detto nel paragrafo \ref{sec:spazi-di-indirizzamento}, l'intera memoria fisica viene mappata all'interno dello spazio di indirizzamento del kernel attraversa la cosiddetta \emph{finestra di memoria fisica} \cite{lettieri:paginazione-complementi}.
-Essendo la finestra di memoria fisica parte della memoria kernel, dunque, l'attacco Meltdown è in grado non solo di leggere la memoria del kernel, ma anche leggere l'intera memoria fisica, compresi gli spazi virtuali degli altri processi.
+L'idea alla base di KAISER è quella di separare lo spazio di memoria kernel da quello utente, ovvero di rendere disponibile la traduzione degli indirizzi virtuali del kernel soltanto quando il sistema si trova in modalità privilegiata.
+Ciò previene Meltdown in quanto, quando il sistema sta eseguendo il programma utente della sezione \vref{sec:meltdown-conclusioni}, l'indirizzo virtuale scelto non è presente nell'albero di traduzione del processo attaccante e quindi la CPU non è in grado di accedervi neanche in maniera speculativa.
+
+
+
 
 
