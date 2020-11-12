@@ -4,14 +4,14 @@ Il nucleo didattico è un \textbf{kernel a 64 bit} perfettamente funzionante, ut
 Il sistema è organizzato in tre moduli distinti \cite{lettieri:nucleo}:
 \begin{itemize}
 	\item \textbf{SISTEMA}, eseguito con il processore a livello sistema, che contiene la realizzazione dei processi, inclusa la gestione della memoria;
-	\item \textbf{IO}, eseguito con il processore a livello sistema, che contiene le routine di ingresso/uscita che permettono di utilizzare le periferiche collegate al sistema;
+	\item \textbf{I/O}, eseguito con il processore a livello sistema, che contiene le routine di ingresso/uscita che permettono di utilizzare le periferiche collegate al sistema;
 	\item \textbf{UTENTE}, eseguito con il processore a livello utente, che contiene il programma che il nucleo dovrà eseguire.
 \end{itemize}
-I moduli sistema e io forniscono un supporto al modulo utente, sotto forma di \emph{primitive} che questo può invocare.
+I moduli sistema e I/O forniscono un supporto al modulo utente, sotto forma di \emph{primitive} che questo può invocare.
 
 Il sistema sviluppato, per quanto funzionante, non è autosufficiente e per sviluppare i moduli necessita di un altro sistema di appoggio, nel nostro caso Linux, i cui strumenti devono essere opportunamente configurati in modo che produca eseguibili per il nostro sistema. Il nucleo così sviluppato può essere eseguito sia su una macchina reale (sconsigliato), sia su un emulatore. Nel nostro caso, useremo una versione di QEMU opportunamente modificata~\cite{lettieri:istruzioni-nucleo}.
 
-Il modulo sistema deve essere caricato da un \emph{bootstrap loader} mentre il modulo io e utente devono essere caricati da una \emph{partizione di swap}, nel nostro caso emulata da un file binario
+Il modulo sistema deve essere caricato da un \emph{bootstrap loader} mentre il modulo I/O e utente devono essere caricati da una \emph{partizione di swap}, nel nostro caso emulata da un file binario
 
 \section{Gestione dei processi}
 All'interno del nucleo didattico, i processi vengono rappresentati attraverso due strutture dati:
@@ -23,6 +23,7 @@ All'interno del nucleo didattico, i processi vengono rappresentati attraverso du
 Il sistema prevede una politica di schedulazione a priorità fissa, in cui passa in esecuzione il processo pronto con priorità \emph{maggiore}. A parità di priorità, viene adottata una politica FIFO (\emph{First Input, First Output}).
 
 \section{Gestione della memoria virtuale}
+\label{sec:nucleo-memoria}
 Il nostro sistema implementa la paginazione su domanda~\cite{lettieri:paginazione-su-domanda}, con zone di memoria condivise tra tutti i processi e zone private ai processi~\cite{lettieri:paginazione-nel-nucleo}.
 
 \begin{figure}
@@ -32,7 +33,7 @@ Il nostro sistema implementa la paginazione su domanda~\cite{lettieri:paginazion
 	\label{fig:memoria-virtuale-nucleo}
 \end{figure}
 
-La memoria virtuale di ogni processo è diviso nelle seguenti sezioni (vedi anche \ref{fig:memoria-virtuale-nucleo}: 
+La memoria virtuale di ogni processo è diviso nelle seguenti sezioni (vedi anche figura~\ref{fig:memoria-virtuale-nucleo}): 
 \begin{itemize}
 	\item Il sottospazio canonico superiore, con indirizzi da 0x0000000000000000 a \linebreak 0x00007FFFFFFFFFFF, accessibile solo da livello sistema. A sua volta suddiviso in:
 	\begin{itemize}

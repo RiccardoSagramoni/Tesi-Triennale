@@ -112,6 +112,7 @@ Dato che l'intera memoria fisica viene mappata all'interno dello spazio di indir
 
 %%
 \section{Il sistema di protezione KAISER}
+\label{sec:kaiser}
 KAISER, proposto da \textcite{gruss:kaslr}, è una modifica del nucleo in cui il kernel non viene mappato nello spazio virtuale dei processi utente.
 Questa modifica era stata pensata per prevenire attacchi side-channel contro la misura di protezione KASLR \cite{hund:practical-timing-side-channel, gruss:prefetch-side-channel-attacks, jang:breaking-kaslr}, ma ha l'importante effetto secondario di prevenire Meltdown~\cite{lipp:meltdown}.
 

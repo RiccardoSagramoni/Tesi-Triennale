@@ -1,1 +1,36 @@
 \chapter{Implementazione del sistema di protezione}
+Nello svolgimento di questa tesi, abbiamo implementato sul nostro sistema una versione modificata di KAISER per proteggere il nucleo da Meltdown. 
+Per semplicità, è stato protetta soltanto la sezione \emph{sistema/condivisa} della memoria virtuale, contenente la finestra di memoria virtuale (vedi sezione \vref{sec:nucleo-memoria}).
+Le sezioni io/condivisa e sistema/privata sono dunque ancora vulnerabili a Meltdown.
+
+\section{La finestra di memoria fisica}
+Nel nostro sistema, la finestra di memoria virtuale occupa interamente la \emph{prima} entrata della tabella di livello 4 di ogni processo ed è inizializzata dal boot loader all'avvio della macchina virtuale.
+Grazie a questa proprietà, abbiamo potuto effettuare una prima ottimizzazione rispetto alla versione di KAISER proposta da \textcite{gruss:kaslr}: invece di creare lo spazio d'indirizzamento shadow a partire dalla tabella di livello 4, nel nostro sistema viene costruita a partire dalla \emph{tabella di livello 3}.
+Al momento del passaggio nelle funzioni trampolino, il sistema modificherà la prima entrata della tabella di livello 4 del processo in esecuzione invece del registro CR4, inserendovi l'indirizzo della tabella di livello 3 "kernel" (se il processore sta passando a livello sistema) o "shadow" (se sta tornando a livello utente).
+
+Oltre al risparmio di spazio per avere una tabella duplicata in meno, questa ottimizzazione evita lo svuotamento implicito del \emph{Translation Lookaside Buffer} (TLB) dovuto alla modifica del registro CR4~\cite{gruss:kaslr}, che avrebbe un impatto negativo sulle prestazioni. 
+Nella proposta di \textcite{gruss:kaslr}, questo problema veniva aggirato sfruttando alcune funzionalità delle CPU moderne di cui non disponiamo nel nostro sistema emulato.
+
+\section{Le funzioni e la memoria trampolino}
+Nel paragrafo \vref{sec:kaiser} abbiamo affermato che alcune porzioni del kernel devono essere mappate nello spazio di indirizzamento shadow per permettere il funzionamento delle interruzioni.
+Nella nostra implementazione le porzioni necessarie (che abbiamo denominato nel loro complesso come \emph{memoria trampolino})sono state raccolte in tre sezioni Assembly: una contenente il codice (\texttt{.trampoline\_text}) e due contenenti i dati (\texttt{.trampoline\_data} per le variabili non costanti e \texttt{.trampoline\_bss} per le costanti).
+Ogni sezione è stato allineata alla dimensione delle pagine virtuali (4KiB), in modo che le pagine in cui si trovano le tre sezioni siano occupate da esse in maniera esclusiva e non vi si trovino altre porzioni del kernel.
+Questo ci permette di inserirne la traduzione da indirizzo virtuale a fisico nello spazio di indirizzamento shadow.
+
+Le funzioni trampolino d'ingresso (nel kernel) e di uscita (dal kernel) si occupano di aggiornare la prima entrata della tabella di livello 4 con il descrittore di tabella 3 opportuno.
+Mentre la tabella di livello 3 \emph{kernel} viene creata dal boot loader, la tabella di livello 3 \emph{shadow} viene creata dal nostro programma durante la fase di inizializzazione della memoria virtuale (vedi sezione \vref{sec:memoria-shadow}) e il suo descrittore viene conservato nella variabile globale \texttt{des\_finestra\_shadow} (riga 754 del listato \ref{lst:sistemacpp-743}).
+La sostituzione dello spazio di indirizzamento si limita in pratica a scrivere nella prima entrata della tabella di livello 4 del processo in esecuzione il contenuto di \texttt{des\_finestra\_shadow}, se stiamo passando al livello utente, o di \texttt{des\_finestra\_kernel} (inizializzato da noi; riga 1725 del listato \ref{lst:sistemas-685}), se stiamo passando al livello sistema.
+
+\section{Costruzione dello spazio di memoria shadow}
+\label{sec:memoria-shadow}
+
+\section{La gestione dei TSS}
+
+\section{Il TLB}
+Nonostante si sia evitato lo svuotamento implicito del TLB, è in ogni caso necessario invalidarlo forzatamente quando il sistema passa da sistema a utente. 
+L'efficacia di KAISER si basa sulla garanzia che nell'albero di traduzione di ogni processo non vi sia il kernel e la finestra di memoria fisica (o la struttura equivalente per lo specifico sistema operativo) quando il processore lavora a livello utente e che \emph{la CPU non abbia nessun altro modo per ottenere le traduzioni degli indirizzi}.
+Quando il processore lavora in modalità privilegiata, può accedere all'albero di traduzione completo di finestra di memoria fisica e la traduzione degli indirizzi a cui accede viene conservata nel TLB.
+
+Se gli indirizzi della finestra di memoria non venissero invalidati quando il processore torna a livello utente, un processo attaccante potrebbe accedere tranquillamente agli indirizzi di sistema acceduti dal processore, in quanto, essendo le loro traduzioni conservate nel TLB, il processore \emph{non} utilizzerà l'albero di traduzione, bypassando così la protezione contro Meltdown.
+
+Dunque, è necessario invalidare il TLB nella funzione trampolino di uscita dal kernel (vedi riga 565 del listato \vref{lst:sistemas-519}).

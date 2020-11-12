@@ -6,8 +6,8 @@ extern "C" natq end_trampoline_data;
 extern "C" natq start_trampoline_bss;
 extern "C" natq end_trampoline_bss;
 
-// tab_entry che descrive la finestra di memoria shadow
-// da sostituire con la finestra di memoria normale
+// tab_entry che descrive la finestra di memoria shadow.
+// Da sostituire con la finestra di memoria normale
 // quando il programma passa a livello utente
 tab_entry des_finestra_shadow = 0;
 
