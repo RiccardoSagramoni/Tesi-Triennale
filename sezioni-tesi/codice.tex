@@ -1,0 +1,118 @@
+\chapter{Codice}
+\section{sistema.cpp}
+
+\lstinputlisting[
+	language=C++,
+	style=customcpp,
+	firstnumber=19,
+	label=lst:sistemacpp-19,
+	caption={Descrittori di processo e di TSS}
+	]{"code/sistema_19.cpp"}
+
+\lstinputlisting[
+	language=C++,  
+	style=customcpp,
+	firstnumber=743,
+	label=lst:sistemacpp-743,
+	caption=Creazione della finestra di memoria shadow
+	]{"code/sistema_743.cpp"}
+
+\pagebreak
+\lstinputlisting[
+	language=C++,  
+	style=customcpp,
+	firstnumber=1009,
+	label=lst:sistemacpp-1009,
+	caption=Creazione di un processo
+	]{"code/sistema_1009.cpp"}
+	
+	
+\lstinputlisting[
+	language=C++,  
+	style=customcpp,
+	firstnumber=1191,
+	label=lst:sistemacpp-1191,
+	caption=Distruzione di un processo
+	]{"code/sistema_1191.cpp"}
+	
+\pagebreak
+\lstinputlisting[
+	language=C++,  
+	style=customcpp,
+	firstnumber=1838,
+	label={lst:sistemacpp-1838},
+	caption=Inizializzazione del sistema
+	]{"code/sistema_1838.cpp"}
+
+%%
+\section{sistema.s}
+
+\lstinputlisting[
+	language={[x64]Assembler},  
+	style=customasm,
+	firstnumber=38,
+	label=lst:sistemas-38,
+	caption=Salva e carica stato
+	]{"code/sistema_38.s"}
+
+\lstinputlisting[
+	language={[x64]Assembler},  
+	style=customasm,
+	firstnumber=333,
+	label=lst:sistemas-333,
+	caption=Istruzioni per caricare nella GDT le primitive trampolino
+	]{"code/sistema_333.s"}
+	
+\lstinputlisting[
+	language={[x64]Assembler},  
+	style=customasm,
+	firstnumber=364,
+	label=lst:sistemas-364,
+	caption=Inizializza GDT e TSS
+	]{"code/sistema_364.s"}
+	
+\lstinputlisting[
+	language={[x64]Assembler},  
+	style=customasm,
+	firstnumber=519,
+	label=lst:sistemas-519,
+	caption=Funzioni trampolino
+	]{"code/sistema_519.s"}
+	
+\lstinputlisting[
+	language={[x64]Assembler},  
+	style=customasm,
+	firstnumber=685,
+	label=lst:sistemas-685,
+	caption={Esempio della parte Assembly di una routine di sistema \\con le chiamate alle funzioni trampolino}
+	]{"code/sistema_685.s"}
+
+\lstinputlisting[
+	language={[x64]Assembler},
+	style=customasm,
+	firstnumber=1666,
+	label=lst:sistemas-1666,
+	caption=Sezioni DATA e TSS della memoria shadow/trampolino
+	]{"code/sistema_1666.s"}
+
+%%
+\section{io.s}
+
+\lstinputlisting[
+	language={[x64]Assembler},  
+	style=customasm,
+	firstnumber=378,
+	label=lst:ios-378,
+	caption={Esempio della parte Assembly di una primitiva di I/O \\ con le chiamate alle primitive trampolino}
+	]{"code/io_378.s"}
+
+%%
+\section{costanti.h}
+
+\lstinputlisting[
+	language=C++,  
+	style=customcpp,
+	firstnumber=76,
+	label=lst:costantih-76,
+	caption=Costanti per gli id delle primitive trampoline
+	]{"code/costanti_76.h"}

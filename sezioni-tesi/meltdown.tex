@@ -58,7 +58,7 @@ Grazie al lancio dell'eccezione, le eventuali istruzioni eseguite in maniera spe
 \subsection{Passo 2: Trasmettere il segreto}
 \label{sec:meltdown-passo-2}
 Per poter trasmettere il segreto, si utilizza un \emph{probe array}, di dimensione pari a 256 pagine virtuali e allocato precedentemente nella memoria del processo attaccante, assicurandosi che \emph{nessuna porzione dell'array sia presente nella cache}. 
-La sequenza di transient instruction contiene un accesso ad un elemento del probe array, il cui offset è calcolato moltiplicando il valore del byte per la dimensione di una pagina virtuale (tipicamente e nel nostro sistema  è \emph{4KB}~\cite{lettieri:paginazione}).
+La sequenza di transient instruction contiene un accesso ad un elemento del probe array, il cui offset è calcolato moltiplicando il valore del byte per la dimensione di una pagina virtuale (tipicamente e nel nostro sistema  è \emph{4KiB}~\cite{lettieri:paginazione}).
 
 Quando la CPU gestisce l'eccezione di protezione causata dal Meltdown, le transient instruction non vengono ritirate dalla CPU, senza avere dunque effetti a livello di macroarchitettura. Sebbene quindi non sia possibile rendere direttamente disponibile il segreto dal programma utente, si hanno importanti effetti secondari a livello di microarchitettura, in particolare nella memoria cache~\cite{lipp:meltdown}.
 
@@ -88,12 +88,15 @@ In base a quanto detto finora, la pagina con la latenza minore è l'unica presen
 Il seguente codice mostra in Assembly x86-64 la sequenza di istruzioni alla base di Meltdown, relative ai passi 1 e 2 dell'attacco.
 
 \begin{lstlisting}[
-	language={[x64]Assembler}, frame=single,
+	language={[x64]Assembler},
+	frame=single,
 	numbers=left, numbersep=7pt,
 	xleftmargin=18.5pt,
 	xrightmargin=-18.5pt,
 	framexleftmargin=13pt,
-	framexrightmargin=-20.5pt
+	framexrightmargin=-20.5pt,
+	basicstyle=\ttfamily\onehalfspacing,
+	keywordstyle=\bf
 	]
 # rcx = indirizzo di memoria kernel
 # rbx = probe array

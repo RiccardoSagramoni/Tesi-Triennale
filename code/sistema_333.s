@@ -1,0 +1,2 @@
+	carica_gate	TIPO_TRAMP_IN	a_trampoline_in		LIV_SISTEMA
+	carica_gate	TIPO_TRAMP_OUT	a_trampoline_out	LIV_SISTEMA

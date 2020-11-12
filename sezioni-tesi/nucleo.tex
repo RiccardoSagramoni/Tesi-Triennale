@@ -34,18 +34,18 @@ Il nostro sistema implementa la paginazione su domanda~\cite{lettieri:paginazion
 
 La memoria virtuale di ogni processo è diviso nelle seguenti sezioni (vedi anche \ref{fig:memoria-virtuale-nucleo}: 
 \begin{itemize}
-	\item Il sottospazio canonico superiore, con indirizzi da 0X0000000000000000 a 0X00007FFFFFFFFFFF, accessibile solo da livello sistema. A sua volta suddiviso in:
+	\item Il sottospazio canonico superiore, con indirizzi da 0x0000000000000000 a \linebreak 0x00007FFFFFFFFFFF, accessibile solo da livello sistema. A sua volta suddiviso in:
 	\begin{itemize}
 		\item \textbf{sistema/condivisa}: contiene la finestra di memoria fisica
 		\item \textbf{sistema/privata}: contiene la pila sistema del processo
 		\item \textbf{IO/condivisa}: contiene il modulo I/O
 	\end{itemize}
-	\item Il sottospazio canonico inferiore, con indirizzi da 0XFFFF800000000000 a 0XFFFFFFFFFFFFFFFF, accessibile solo da livello sistema. A sua volta suddiviso in:
+	\item Il sottospazio canonico inferiore, con indirizzi da 0xFFFF800000000000 a \linebreak 0xFFFFFFFFFFFFFFFF, accessibile solo da livello sistema. A sua volta suddiviso in:
 	\begin{itemize}
 		\item \textbf{utente/condivisa}: contiene il modulo utente, ovvero le sezioni \texttt{.text} e \texttt{.data} del programma utente
 		\item \textbf{utente/privata}: contiene la pila utente del processo
 	\end{itemize}
 \end{itemize}
-Si noti come alcune parti della memoria fisica siano accessibili esclusivamente tramite la finestra: il primo MiB riservato per ragioni storiche, lo heap di sistema, il modulo sistema, i descrittori di frame e i descrittori di pagine virtuali.
+Si noti come alcune parti della memoria fisica siano accessibili esclusivamente tramite la finestra: il primo MiB di memoria (riservato per ragioni storiche), lo heap di sistema, il modulo sistema, i descrittori di frame e i descrittori di pagine virtuali.
 
 Usando la paginazione su domanda, la memoria fisica funziona da cache dello swap. Normalmente le sole sezioni \emph{residenti}, ovvero non selezionabili come vittime per uno swap, sarebbero la \emph{sistema/condivisa} e la \emph{sistema/privata}, in quanto contenenti la finestra di memoria e la pila usata dal modulo sistema. Per semplicità di implementazione, nel nostro sistema sono state rese residenti tutte le sezioni condivise~\cite{lettieri:paginazione-nel-nucleo}.

@@ -1,5 +1,4 @@
-\documentclass[a4paper,12pt, twoside, openright]{report}
-%\documentclass[a4paper,12pt]{report}
+\documentclass[a4paper,12pt,twoside,openright]{report}
 \usepackage[T1]{fontenc}				% codifica dei font
 \usepackage[utf8]{inputenc}				% lettere accentate da tastiera
 \usepackage[english, italian]{babel}	% lingue del documento
@@ -9,37 +8,83 @@
 \usepackage{microtype}					% migliora riempimento righe
 \usepackage{setspace}					% comandi per interlinea
 \usepackage{pdfpages}					% per includere frontespizio.pdf
-\usepackage{amsmath}
+\usepackage[justification=centering]{caption}
 
 % Margini e interlinea
-\usepackage[top=1.2in, bottom=1.2in, inner=1.5in, outer=1.2in]{geometry}
+\usepackage[top=1in, bottom=1in, inner=1.2in, outer=1in]{geometry}
 \onehalfspacing
 
 % Struttura documento
 \usepackage{frontespizio}
 
+% Colori
+\usepackage{xcolor}
+
 % Codice
 \usepackage{listings}
-\usepackage{xcolor}			% Colori
 \usepackage{inconsolata} 	% Font Consolas per il codice (monospace)
 
-\lstdefinelanguage[x64]{Assembler}[x86masm]{Assembler} {
+\lstdefinelanguage[x64]{Assembler} {
 	morekeywords={
-		movq, movb,
-		rax,rdx,rcx,rbx,rsi,rdi,rsp,rbp, %
-		r8,r8d,r8w,r8b,r9,r9d,r9w,r9b, %
-		r10,r10d,r10w,r10b,r11,r11d,r11w,r11b, %
-		r12,r12d,r12w,r12b,r13,r13d,r13w,r13b, %
-		r14,r14d,r14w,r14b,r15,r15d,r15w,r15b %
+		% Istruzioni
+		movq,movl,movw,movb,
+		pushq,popq,
+		addb,addl,addw,addq,
+		leaq,
+		call, retq, ret, iretq, iret,
+		cmpb,cmpl,cmpw,cmpq,
+		% Registri
+		al,ah,ax,eax,rax,
+		bl,bh,bx,ebx,rbx,
+		cl,ch,cx,ecx,rcx,
+		dl,dh,dx,edx,rdx,
+		dil,di,edi,rdi,
+		sil,si,esi,rsi,
+		rbp,rsp,
+		r8,r8d,r8w,r8b,r9,r9d,r9w,r9b,
+		r10,r10d,r10w,r10b,r11,r11d,r11w,r11b,
+		r12,r12d,r12w,r12b,r13,r13d,r13w,r13b,
+		r14,r14d,r14w,r14b,r15,r15d,r15w,r15b
 	},
 	morecomment=[l]{\#},
-	sensitive=false
+	morecomment=[l]{//},
+	sensitive=false,
+	showspaces=false
 }
 
-\lstset{
-	language=[x64]Assembler,
-	basicstyle=\ttfamily\onehalfspacing,
-	keywordstyle=\bf
+\lstdefinestyle{customasm}{
+	language={[x64]Assembler},
+	frame=single,
+	numbers=left,
+	% Margine
+	xleftmargin=0.5in,
+	%
+	tabsize=4,
+	breaklines=true,
+	postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+	% Stile
+	basicstyle=\ttfamily\onehalfspacing\small,
+	keywordstyle=\color{blue},
+	commentstyle=\sc
+}
+
+\lstdefinestyle{customcpp}{
+	language=C++,
+	%
+	frame=single,
+	numbers=left,
+	% Margine
+	xleftmargin=0.5in,
+	%
+	tabsize=4,
+	breaklines=true,
+	postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+	% Stile
+	basicstyle=\ttfamily\onehalfspacing\small,
+	keywordstyle=\color{blue},
+	commentstyle=\sc,
+	% Codice
+	morekeywords={natq, natl, natw, natb, vaddr, addr, "C", tab\_entry}
 }
 
 % Impostazioni bibliografia
@@ -75,6 +120,11 @@
 \include{sezioni-tesi/nucleo}
 
 \include{sezioni-tesi/implementazione}
+
+\include{sezioni-tesi/codice}
+
+\cleardoublepage
+\lstlistoflistings
 
 \cleardoublepage
 \phantomsection
