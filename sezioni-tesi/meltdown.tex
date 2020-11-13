@@ -1,4 +1,5 @@
 \chapter{Meltdown e il sistema di protezione KAISER}
+\label{cap:meltdown}
 La sicurezza dei sistemi informatici attuali si fonda sull'isolamento della memoria,
 ad esempio marcando come privilegiati gli indirizzi di memoria kernel e bloccando eventuali
 accessi da parte di programmi utente \cite{lettieri:protezione}. 
@@ -11,11 +12,33 @@ sistema \cite{lipp:meltdown}.
 
 Meltdown rompe quindi tutti i meccanismi di sicurezza che si basano sull'isolamento degli spazi di indirizzamento, andando a colpire milioni di utenti. Il sistema di protezione KAISER, sviluppato originariamente per KASLR \cite{gruss:kaslr}, ha l'importante effetto secondario di impedire l'utilizzo di Meltdown \cite{lipp:meltdown}.
 
+L'obiettivo di questa tesi è stato quello di proteggere da Meltdown il nucleo didattico utilizzato nel corso di "Calcolatori Elettronici" tenuto dall'Ing. Giuseppe Lettieri, implementando una versione ottimizzata di KAISER.
+
+Nella nostra trattazione, mostreremo prima le caratteristiche e le cause dell'attacco Meltdown e in che modo il sistema KAISER possa proteggere il kernel da questo tipo di attacco (capitolo \ref{cap:meltdown}).
+Dopodiché verranno descritte le caratteristiche peculiari del nucleo didattico (capitolo \vref{cap:nucleo}). 
+Infine, concluderemo con la presentazione delle modifiche apportate al nucleo (capitolo \vref{cap:implementazione}) e con il codice prodotto (capitolo \vref{cap:codice}).
+
 
 \section{Background}
+Presenteremo ora sinteticamente tre concetti alla base dell'attacco Meltdown: l'esecuzione fuori ordine, gli spazi di indirizzamento e gli attacchi alla memoria cache.
 
 \subsection{Esecuzione Fuori Ordine}
 \label{sec:esecuzione-fuori-ordine}
+L'esecuzione fuori ordine è una tecnica di ottimizzazione che permette di massimizzare l'utilizzo delle unità di esecuzione della CPU~\cite{lipp:meltdown}.
+Ogni istruzione Assembly viene prelevata dalla memoria e poi decodificata dalla CPU, ovvero viene tradotta in una o più \emph{micro-operazioni}.
+La CPU non segue il flusso lineare di istruzioni, ma esegue ogni micro-operazione \emph{non appena tutte le risorse necessarie sono disponibili} (che siano risorse hardware o dati restituiti da altre operazioni).
+Si dice quindi che la CPU non esegue le istruzioni linearmente, ma \textbf{in maniera speculativa}~\cite{frosini:calcolatori2}.
+
+Le micro-operazioni vengono inserite in una coda di riordino nell'ordine previsto dal programma.
+Gli effetti di una micro-operazione completata senza errori possono essere applicati sulla RAM e sui registri visibili quando non vi sono altre micro-operazioni davanti nella coda.
+Si dice, in questo caso, che la micro-operazione (o in senso più largo, l'istruzione) viene \emph{ritirata}~\cite{frosini:calcolatori2}.
+Si noti che le istruzioni vengono ritirate dalla CPU nell'ordine in cui sarebbero state eseguite se la CPU avesse seguito in maniera lineare il flusso d'istruzioni.
+
+Nell'esecuzione fuori ordine, è comune che vengano eseguite (ma non ritirate) alcune istruzioni che non fanno parte del flusso lineare di controllo~\cite{frosini:calcolatori2}, dette \emph{transient instruction}~\cite{lipp:meltdown}.
+Questo è dovuto al fatto che la CPU cerca di "indovinare" la direzione che intraprende il flusso di istruzioni in corrispondenza di una istruzione di salto, sfruttando tecniche predittive che variano a seconda dell'hardware~\cite{frosini:calcolatori2}.
+
+Nel caso di una predizione di salto \emph{errata}, le istruzioni \emph{non} vengono ritirate e gli effetti vengono annullati (\emph{rollback delle istruzioni}).
+In questo modo, le transient instruction non hanno alcun effetto sulla macroarchitettura (memoria centrale e registri visibili del processore).
 
 \subsection{Spazi di indirizzamento}
 \label{sec:spazi-di-indirizzamento}

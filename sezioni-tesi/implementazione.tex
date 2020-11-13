@@ -1,4 +1,5 @@
 \chapter{Implementazione del sistema di protezione}
+\label{cap:implementazione}
 Nello svolgimento di questa tesi, abbiamo implementato sul nostro sistema una versione modificata di KAISER per proteggere il nucleo da Meltdown. 
 Per semplicità, è stato protetta soltanto la sezione \emph{sistema/condivisa} della memoria virtuale, contenente la finestra di memoria virtuale (vedi sezione \vref{sec:nucleo-memoria}).
 Le sezioni io/condivisa e sistema/privata sono dunque ancora vulnerabili a Meltdown.
@@ -18,13 +19,40 @@ Ogni sezione è stato allineata alla dimensione delle pagine virtuali (4KiB), in
 Questo ci permette di inserirne la traduzione da indirizzo virtuale a fisico nello spazio di indirizzamento shadow.
 
 Le funzioni trampolino d'ingresso (nel kernel) e di uscita (dal kernel) si occupano di aggiornare la prima entrata della tabella di livello 4 con il descrittore di tabella 3 opportuno.
-Mentre la tabella di livello 3 \emph{kernel} viene creata dal boot loader, la tabella di livello 3 \emph{shadow} viene creata dal nostro programma durante la fase di inizializzazione della memoria virtuale (vedi sezione \vref{sec:memoria-shadow}) e il suo descrittore viene conservato nella variabile globale \texttt{des\_finestra\_shadow} (riga 754 del listato \ref{lst:sistemacpp-743}).
-La sostituzione dello spazio di indirizzamento si limita in pratica a scrivere nella prima entrata della tabella di livello 4 del processo in esecuzione il contenuto di \texttt{des\_finestra\_shadow}, se stiamo passando al livello utente, o di \texttt{des\_finestra\_kernel} (inizializzato da noi; riga 1725 del listato \ref{lst:sistemas-685}), se stiamo passando al livello sistema.
+Mentre la tabella di livello 3 \emph{kernel} viene creata dal boot loader, la tabella di livello 3 \emph{shadow} viene creata dal nostro programma durante la fase di inizializzazione della memoria virtuale (vedi sezione \vref{sec:memoria-shadow}) e il suo descrittore viene conservato nella variabile globale \texttt{des\_finestra\_shadow} (riga 754 del listato \vref{lst:sistemacpp-743}).
+La sostituzione dello spazio di indirizzamento si limita in pratica a scrivere nella prima entrata della tabella di livello 4 del processo in esecuzione il contenuto di \texttt{des\_finestra\_shadow}, se stiamo passando al livello utente, o di \texttt{des\_finestra\_kernel} (inizializzato da noi; riga 1725 del listato \vref{lst:sistemas-685}), se stiamo passando al livello sistema.
+
+Sono state implementate due versioni delle funzioni trampolino: 
+\begin{itemize}
+	\item Le routine \texttt{trampoline\_in} e \texttt{trampoline\_out}, chiamate dal modulo sistema, che controllano se è necessario effettuare la sostituzione della finestra di memoria fisica attuale (ovvero se stiamo passando da livello utente a sistema o viceversa).\\
+	Questo viene valutato dall'indirizzo salvato in pila durante il lancio dell'interruzione, che rappresenta l'indirizzo dell'ultima istruzione eseguita: se l'indirizzo appartiene al sottospazio inferiore della memoria virtuale, si può concludere che il flusso di controllo è passato dal modulo utente al modulo sistema (nel caso di trampolino di ingresso; riga~585 del listato~\vref{lst:sistemas-519}) o che tornerà nel modulo utente dopo l'esecuzione di \texttt{iretq} (nel caso di trampolino di uscita; riga~615 del listato~\vref{lst:sistemas-519}).
+	In tal caso, è quindi necessario effettuare l'opportuna modifica alla finestra di memoria.\\
+	
+	\item Le primitive di sistema \texttt{a\_trampoline\_in} e \texttt{a\_trampoline\_out}, offerte al modulo I/O per effettuare manualmente il trampolino, che non richiedono il controllo dell'indirizzo in quanto non possono essere chiamate dal modulo utente (listato~\vref{lst:ios-378}).
+\end{itemize}
+
+La parte in comune tra le due versioni è stata accorpata in due funzioni chiamate \texttt{trampoline\_in\_2} e \texttt{trampoline\_out\_2} (righe 529 e 549 listato~\vref{lst:sistemas-519})
 
 \section{Costruzione dello spazio di memoria shadow}
 \label{sec:memoria-shadow}
+Il sottoalbero di traduzione dello spazio di memoria shadow viene costruito durante l'inizializzazione del kernel dalla funzione \texttt{crea\_finestra\_FM\_shadow} (riga 882 del listato~\vref{lst:sistemacpp-743}), che mappa in una tabella di livello 3 creata oppositamente (la tabella \emph{shadow}) tutti gli indirizzi della \emph{memoria trampolino}, ovvero le tre sezioni text, data e bss che costituiscono la porzione di kernel essenziale per le interruzioni.
+
+Il meccanismo di mappatura delle pagine cosiddette \emph{shadow} è identico a quello delle pagine normali nella memoria virtuale, ovvero genera un albero di traduzione assicurandosi la presenza di tutte le tabelle necessarie ai vari livelli per tradurre gli indirizzi della \emph{memoria trampolino} e marcando come assenti le altre pagine.
+Ciò impedirà a Meltdown di accedere al kernel e all'intera memoria fisica.
 
 \section{La gestione dei TSS}
+Nel nostro sistema, ogni processo ha un proprio \textbf{Task State Segment} (TSS) all'interno della struttura \texttt{des\_proc}, allocata nello heap di sistema quando il processo viene creato.
+Questa proprietà rende impossibile proteggere completamente il nucleo, in quanto i TSS sono \emph{necessari} per le interruzioni e se mappassimo le pagine dello heap che contengono un TSS renderemmo vulnerabili a Meltdown gli altri dati allocati nella medesima pagina.
+Ciò comprometterebbe l'efficacia della protezione contro Meltdown.
+
+Per questo motivo, abbiamo effettuato una separazione netta tra la componente del \texttt{des\_proc} richiesta dall'hardware (il TSS) e la componente utilizzata lato software (in cui si trova il contesto salvato).
+
+I TSS, essendo necessari nel nucleo didattico solo per l'indirizzo della pila sistema del processo in quanto la gestione dei processi è affidata al software, vengono accorpati in unico TSS, inizializzato dalla funzione \texttt{init\_tss} (riga 1845 del listato~\vref{lst:sistemacpp-1838}) e allocato nella sezione \texttt{.trampoline\_data} (riga 1721 del listato~\vref{lst:sistemas-1666}), così da essere mappato nello spazio di memoria shadow.
+Al momento di caricare lo stato del processo in esecuzione, la routine \texttt{carica\_stato} assegnerà al campo \texttt{punt\_nucleo} del TSS l'indirizzo della base della pila sistema del processo (riga 133 del listato~\vref{lst:sistemas-38}), conservato nella nuova struttura \texttt{des\_proc} (riga 40 del listato~\vref{lst:sistemacpp-19}).
+
+Essendovi un solo TSS hardware, la funzione della sezione dei descrittori TSS della \textbf{Global Descriptor Table} (GDT) rimane solo quella di assegnare un id libero ai nuovi processi, in quanto tutte le entrate dei descrittori saranno uguali.
+Questa funzionalità può essere gestita in C++, creando un'array di puntatori a \texttt{des\_proc} (la nuova struttura senza TSS) che assolverà alla duplici funzione di restituire un descrittore di processo dato l'id e gestire l'assegnazione e la rimozione degli identificatori dei processi (riga 47 del listato~\ref{lst:sistemacpp-19}).
+La sezione dei descrittori TSS della GDT può essere compressa in una sola entrata (riga 1717 del listato~\vref{lst:sistemas-1666}) e il registro TR (che contiene l'entrata della GDT che punta al TSS del processo in esecuzione) viene settato una sola volta in fase di inizializzazione del kernel (funzione \texttt{init\_gdt}, riga 368, listato~\vref{lst:sistemas-364}).
 
 \section{Il TLB}
 Nonostante si sia evitato lo svuotamento implicito del TLB, è in ogni caso necessario invalidarlo forzatamente quando il sistema passa da sistema a utente. 
