@@ -50,7 +50,7 @@ In questo modo, le transient instruction non hanno alcun effetto sulla macroarch
 \end{figure}
 
 Per risolvere diversi problemi, in particolare l'isolamento dei processi \cite{lettieri:paginazione}, le CPU supportano l'utilizzo di spazi d'indirizzamento virtuali, in cui gli indirizzi virtuali (relativi al singolo processo) vengono tradotti in indirizzi fisici. 
-Lo spazio d'indirizzamento di un processo (ovvero tutti i possibili indirizzi che un processo può generare) viene suddiviso in regioni dette \emph{pagine} che possono essere mappate individualmente nella memoria fisica attraverso una tabella di traduzione multivello. 
+Lo spazio d'indirizzamento di un processo (ovvero tutti i possibili indirizzi che un processo può generare) viene suddiviso in regioni dette \emph{pagine} che possono essere mappate individualmente nella memoria fisica attraverso una tabella di traduzione multivello~\cite{lettieri:tabelle-multilivello}. 
 Ogni processo possiede una propria tabella di traduzione che traduce tutti e soli i suoi indirizzi virtuali e che definisce le proprietà di protezione delle varie zone di memoria. 
 
 Per permettere ad ogni processo di usufruire delle primitive di sistema offerte dal kernel e alle routine di sistema di accedere liberamente all'intera memoria fisica (ad esempio per modificare le tabelle di traduzione di un processo), si utilizza una traduzione, denominata \emph{finestra di memoria fisica}, che mappi l'intera memoria fisica, compresi il kernel e lo spazio di memoria di tutti i processi, nello spazio di indirizzamento accessibile solo da livello privilegiato (figura \vref{fig:memoria-fisica})~\cite{lettieri:paginazione-complementi}.
@@ -76,14 +76,14 @@ Il tentativo di accesso ad una pagina non accessibile da livello utente fa in mo
 Tuttavia, a causa dell'esecuzione fuori ordine, la CPU potrebbe aver già eseguito l'istruzione di accesso in maniera speculativa \emph{prima} delle istruzioni relative all'eccezione di protezione, al fine di minimizzare i tempi di latenza (vedi paragrafo \ref{sec:esecuzione-fuori-ordine}).
 In questo modo la CPU accederebbe in maniera speculativa alla locazione di memoria desiderata prima che il processo venga terminato.
 
-Grazie al lancio dell'eccezione, le eventuali istruzioni eseguite in maniera speculativa, che non sarebbero docute essere eseguite in quanto relative ad una previsione di salto \emph{errata}, non vengono \emph{ritirate} dalla CPU e non hanno così alcun effetto sulla macroarchitettura in generale (memoria centrale e registri logici non speculativi del processore) \cite{frosini:calcolatori2}.
+Grazie al lancio dell'eccezione, le eventuali istruzioni eseguite in maniera speculativa (le \emph{transient instruction}), che non sarebbero dovute essere eseguite in quanto relative ad una previsione di salto \emph{errata}, non vengono \emph{ritirate} dalla CPU e non hanno così alcun effetto sulla macroarchitettura in generale (memoria centrale e registri logici non speculativi del processore) \cite{frosini:calcolatori2}.
 
 \subsection{Passo 2: Trasmettere il segreto}
 \label{sec:meltdown-passo-2}
 Per poter trasmettere il segreto, si utilizza un \emph{probe array}, di dimensione pari a 256 pagine virtuali e allocato precedentemente nella memoria del processo attaccante, assicurandosi che \emph{nessuna porzione dell'array sia presente nella cache}. 
 La sequenza di transient instruction contiene un accesso ad un elemento del probe array, il cui offset è calcolato moltiplicando il valore del byte per la dimensione di una pagina virtuale (tipicamente e nel nostro sistema  è \emph{4KiB}~\cite{lettieri:paginazione}).
 
-Quando la CPU gestisce l'eccezione di protezione causata dal Meltdown, le transient instruction non vengono ritirate dalla CPU, senza avere dunque effetti a livello di macroarchitettura. Sebbene quindi non sia possibile rendere direttamente disponibile il segreto dal programma utente, si hanno importanti effetti secondari a livello di microarchitettura, in particolare nella memoria cache~\cite{lipp:meltdown}.
+Quando la CPU gestisce l'eccezione di protezione causata dal Meltdown, le transient instruction non vengono ritirate dalla CPU, senza avere dunque effetti a livello di macroarchitettura. Sebbene quindi non sia possibile rendere direttamente disponibile il segreto dal programma utente, si hanno importanti effetti secondari a livello di \textbf{microarchitettura}, in particolare nella memoria cache~\cite{lipp:meltdown}.
 
 Durante l'esecuzione speculativa, infatti, la locazione di memoria all'interno del probe array che viene acceduta dalla CPU, viene memorizzata in memoria cache e vi rimane anche in seguito all'annullamento degli effetti delle transient instruction, rendendola vulnerabile ad un attacco side-channel.
 
@@ -103,7 +103,7 @@ Ciò previene il fatto che il prefetcher hardware (per ragioni di ottimizzazione
 Dopo che la sequenza di istruzioni del passo 2 è stata eseguita, in cache è presente esattamente una linea di memoria del probe array.
 L'offset di questa linea è dipendente esclusivamente dal valore segreto presente nell'arbitaria locazione di memoria protetta.
 Grazie a ciò, l'attaccante può effettuare un'attacco Flush+Reload~\cite{yaron:flush-reload}, iterando attraverso le 256 pagine del probe array e misurando il tempo di accesso per il primo elemento di ogni pagina (vedi figura \ref{fig:probe-array}).
-In base a quanto detto finora, la pagina con la latenza minore è l'unica presente in memoria cache e il numero della pagina è il valore segreto letto dalla memoria protetta.
+In base a quanto detto finora, la pagina con la latenza minore è l'unica presente in memoria cache e il numero della pagina è il \emph{valore segreto letto dalla memoria protetta}.
 
 
 \subsection{Conclusioni}
@@ -129,7 +129,7 @@ movq (%rbx, %rax), %rbx  # Trasmissione del segreto
 \end{lstlisting} 
 
 Meltdown è quindi in grado di leggere in maniera arbitraria dati presenti in memoria \emph{protetta}, ad esempio nello spazio di indirizzamento kernel. 
-L'efficienza di Meltdown si basa principalmente sull'esistente \emph{race condition} tra il lancio dell'eccezione di protezione e il passo 2 del nostro attacco (vedi paragrafo \vref{sec:meltdown-passo-2}). Per questo motivo, sono previsti alcuni accorgimenti e ottimizzazioni ulteriori non significativi per la nostra trattazione e per le quali rimandiamo a \textcite{lipp:meltdown}.
+L'efficienza di Meltdown si basa principalmente sull'esistente \emph{race condition} tra il lancio dell'eccezione di protezione e il passo 2 del nostro attacco (vedi paragrafo \vref{sec:meltdown-passo-2}). Ovvero le transient instruction devono essere eseguite speculativamente \emph{prima} dell'handler dell'eccezione. Per questo motivo, sono previsti alcuni accorgimenti e ottimizzazioni ulteriori non significativi per la nostra trattazione e per le quali rimandiamo a \textcite{lipp:meltdown}.
 
 Dato che l'intera memoria fisica viene mappata all'interno dello spazio di indirizzamento del kernel attraverso la cosiddetta \emph{finestra di memoria fisica}~\cite{lettieri:paginazione-complementi}, Meltdown è in grado non solo di leggere le zone di memoria relative al kernel, ma anche gli spazi di memoria di tutti gli altri processi. In base a quanto rilevato da \textcite{lipp:meltdown}, Meltdown è in grado di effettuare il dump dell'intera memoria fisica fino ad una velocità di 503 KB/s.
 
@@ -144,15 +144,15 @@ Ciò previene Meltdown in quanto, quando il sistema sta eseguendo il programma u
 Il meccanismo proposto da \citeauthor{gruss:kaslr} è quindi ritenuto la miglior soluzione a breve termine per proteggere i sistemi informatici da Meldown~\cite{lipp:meltdown}.
 
 KAISER introduce il concetto di \textbf{spazi d'indirizzamento shadow} per garantire l'isolamento della memoria kernel. 
-Come mostrato in figura \vref{fig:memoria-shadow}, ogni processo possiede due spazi di indirizzi: uno spazio d'indirizzamento shadow, in cui è mappato solo lo spazio di memoria utente e una porzione del kernel necessaria per le interruzioni, e uno spazio d'indirizzamento in cui è mappato sia l'intero kernel che lo spazio utente, protetto con Supervisor Mode Access Prevention (SMAP) e Supervisor Mode Execution Prevention (SMEP) per combatibilità con x86 Linux~\cite{gruss:kaslr}.
+Come mostrato in figura \vref{fig:memoria-shadow}, ogni processo possiede due spazi di indirizzi: uno spazio d'indirizzamento shadow, in cui è mappato solo lo spazio di memoria utente e una porzione del kernel necessaria per le interruzioni, e uno spazio d'indirizzamento in cui è mappato sia l'intero kernel che lo spazio utente (in figura lo spazio utente è protetto con Supervisor Mode Access Prevention e Supervisor Mode Execution Prevention per compatibilità con x86 Linux)~\cite{gruss:kaslr}.
 
-Ogni qualvolta che il programma passerà da livello utente a livello sistema (ad esempio attraverso una primitiva di sistema o il lancio di un'interruzione) e viceversa, la CPU dovrà aggiornare il registro CR3 con il valore della tabella di livello 4 corrispondente al nuovo livello di privilegio (tabella shadow per il livello utente e tabella kernel per il livello sistema). 
+Ogni qualvolta che il programma passerà da livello utente a livello sistema (ad esempio attraverso una primitiva di sistema o il lancio di un'interruzione) e viceversa, la CPU dovrà aggiornare il registro \textbf{CR3} con il valore della tabella di livello 4 corrispondente al nuovo livello di privilegio (tabella shadow per il livello utente e tabella kernel per il livello sistema). 
 Sarà dunque necessario implementare una o più funzioni (le \emph{funzioni trampolino}), mappate in memoria shadow, dedicate all'aggiornamento corretto del registro CR3 ad ogni modifica del livello di privilegio.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=\textwidth]{"img/memoria-shadow.pdf"}
-	\caption{(a) Il kernel è mappato nella memoria virtuale di ogni processo. (b) TODO}
+	\caption{(a) Il kernel è mappato nella memoria virtuale di ogni processo.\\(b) Creazione dello spazio di indirizzamento shadow senza il kernel (solo alcune porzioni vengono mantenute per la gestione delle interruzioni)}
 	\label{fig:memoria-shadow}
 \end{figure}
 

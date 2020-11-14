@@ -1,5 +1,41 @@
 \chapter{Codice}
 \label{cap:codice}
+
+\lstdefinestyle{customcpp}{
+	language=C++,
+	%
+	frame=single,
+	numbers=left,
+	% Margine
+	xleftmargin=0.5in,
+	%
+	tabsize=4,
+	breaklines=true,
+	postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+	% Stile
+	basicstyle=\ttfamily\onehalfspacing\footnotesize,
+	keywordstyle=\color{blue},
+	commentstyle=\sc,
+	% Codice
+	morekeywords={natq, natl, natw, natb, vaddr, addr, "C", tab\_entry}
+}
+
+\lstdefinestyle{customasm}{
+	language={[x64]Assembler},
+	frame=single,
+	numbers=left,
+	% Margine
+	xleftmargin=0.5in,
+	%
+	tabsize=4,
+	breaklines=true,
+	postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
+	% Stile
+	basicstyle=\ttfamily\onehalfspacing\small,
+	keywordstyle=\color{blue},
+	commentstyle=\sc
+}
+
 \section{sistema.cpp}
 
 \lstinputlisting[
@@ -18,7 +54,6 @@
 	caption=Creazione della finestra di memoria shadow
 	]{"code/sistema_743.cpp"}
 
-\pagebreak
 \lstinputlisting[
 	language=C++,  
 	style=customcpp,
@@ -35,8 +70,7 @@
 	label=lst:sistemacpp-1191,
 	caption=Distruzione di un processo
 	]{"code/sistema_1191.cpp"}
-	
-\pagebreak
+
 \lstinputlisting[
 	language=C++,  
 	style=customcpp,

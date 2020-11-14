@@ -2,7 +2,7 @@
 end_trampoline_text:
 
 ////////////////////////////////////////////////////
-// 		Sezione TRAMPOLINE_DATA: tabelle e dati			//
+//   Sezione TRAMPOLINE_DATA: tabelle e dati      //
 ////////////////////////////////////////////////////
 .section .trampoline_data, "aw"	
 .balign 4096

@@ -6,16 +6,13 @@
 \usepackage[italian]{varioref}			% riferimenti completi
 \usepackage{indentfirst}				% rientro prima riga del capoverso
 \usepackage{microtype}					% migliora riempimento righe
-\usepackage{setspace}					% comandi per interlinea
 \usepackage{pdfpages}					% per includere frontespizio.pdf
 \usepackage[justification=centering]{caption}
 
 % Margini e interlinea
 \usepackage[top=1in, bottom=1in, inner=1.2in, outer=1in]{geometry}
+\usepackage{setspace} % comandi per interlinea
 \onehalfspacing
-
-% Struttura documento
-\usepackage{frontespizio}
 
 % Colori
 \usepackage{xcolor}
@@ -50,41 +47,6 @@
 	morecomment=[l]{//},
 	sensitive=false,
 	showspaces=false
-}
-
-\lstdefinestyle{customasm}{
-	language={[x64]Assembler},
-	frame=single,
-	numbers=left,
-	% Margine
-	xleftmargin=0.5in,
-	%
-	tabsize=4,
-	breaklines=true,
-	postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
-	% Stile
-	basicstyle=\ttfamily\onehalfspacing\small,
-	keywordstyle=\color{blue},
-	commentstyle=\sc
-}
-
-\lstdefinestyle{customcpp}{
-	language=C++,
-	%
-	frame=single,
-	numbers=left,
-	% Margine
-	xleftmargin=0.5in,
-	%
-	tabsize=4,
-	breaklines=true,
-	postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space},
-	% Stile
-	basicstyle=\ttfamily\onehalfspacing\small,
-	keywordstyle=\color{blue},
-	commentstyle=\sc,
-	% Codice
-	morekeywords={natq, natl, natw, natb, vaddr, addr, "C", tab\_entry}
 }
 
 % Impostazioni bibliografia

@@ -17,8 +17,8 @@ Il modulo sistema deve essere caricato da un \emph{bootstrap loader} mentre il m
 \section{Gestione dei processi}
 All'interno del nucleo didattico, i processi vengono rappresentati attraverso due strutture dati:
 \begin{itemize}
-	\item Il descrittore di processo (\emph{des\_proc}), contenente il TSS del processo e i valori dei registri salvati all'ultimo cambio di contesto. Viene indirizzato dalla entrata della GDT relativa al processo.
-	\item Il \emph{proc\_elem}, contenente l'id e la priorità del processo e usato nelle code di processi.
+	\item Il descrittore di processo (\texttt{des\_proc}), contenente il TSS del processo e i valori dei registri salvati all'ultimo cambio di contesto. Viene indirizzato dalla entrata della GDT relativa al processo.
+	\item Il \texttt{proc\_elem}, contenente l'id e la priorità del processo e usato nelle code di processi.
 \end{itemize}
 
 Il sistema prevede una politica di schedulazione a priorità fissa, in cui passa in esecuzione il processo pronto con priorità \emph{maggiore}. A parità di priorità, viene adottata una politica FIFO (\emph{First Input, First Output}).
@@ -34,7 +34,7 @@ Il nostro sistema implementa la paginazione su domanda~\cite{lettieri:paginazion
 	\label{fig:memoria-virtuale-nucleo}
 \end{figure}
 
-La memoria virtuale di ogni processo è diviso nelle seguenti sezioni (vedi anche figura~\ref{fig:memoria-virtuale-nucleo}): 
+La memoria virtuale di ogni processo è implementata attraverso una tabella di traduzione multi-livello~\cite{lettieri:tabelle-multilivello} ed è divisa nelle seguenti sezioni (vedi anche figura~\ref{fig:memoria-virtuale-nucleo}): 
 \begin{itemize}
 	\item Il sottospazio canonico superiore, con indirizzi da 0x0000000000000000 a \linebreak 0x00007FFFFFFFFFFF, accessibile solo da livello sistema. A sua volta suddiviso in:
 	\begin{itemize}
@@ -42,7 +42,7 @@ La memoria virtuale di ogni processo è diviso nelle seguenti sezioni (vedi anch
 		\item \textbf{sistema/privata}: contiene la pila sistema del processo
 		\item \textbf{IO/condivisa}: contiene il modulo I/O
 	\end{itemize}
-	\item Il sottospazio canonico inferiore, con indirizzi da 0xFFFF800000000000 a \linebreak 0xFFFFFFFFFFFFFFFF, accessibile solo da livello sistema. A sua volta suddiviso in:
+	\item Il sottospazio canonico inferiore, con indirizzi da 0xFFFF800000000000 a \linebreak 0xFFFFFFFFFFFFFFFF, accessibile sia da livello sistema che da livello utente. A sua volta suddiviso in:
 	\begin{itemize}
 		\item \textbf{utente/condivisa}: contiene il modulo utente, ovvero le sezioni \texttt{.text} e \texttt{.data} del programma utente
 		\item \textbf{utente/privata}: contiene la pila utente del processo
