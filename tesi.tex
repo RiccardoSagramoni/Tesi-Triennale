@@ -8,6 +8,7 @@
 \usepackage{microtype}					% migliora riempimento righe
 \usepackage{pdfpages}					% per includere frontespizio.pdf
 \usepackage[justification=centering]{caption}
+\usepackage{tocloft}
 
 % Margini e interlinea
 \usepackage[top=2.5cm, bottom=2.5cm, inner=3cm, outer=2.5cm]{geometry}
@@ -74,8 +75,10 @@
 	\cleardoublepage
 \end{titlepage}
 
+{
+\setlength{\cftbeforetoctitleskip}{3em}
 \tableofcontents
-
+}
 \include{sezioni-tesi/meltdown}
 
 \include{sezioni-tesi/nucleo}
