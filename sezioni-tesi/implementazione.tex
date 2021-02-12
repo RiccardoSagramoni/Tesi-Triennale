@@ -7,9 +7,9 @@ Le sezioni io/condivisa e sistema/privata sono dunque ancora vulnerabili a Meltd
 \section{La finestra di memoria fisica}
 Nel nostro sistema, la finestra di memoria virtuale occupa interamente la \emph{prima} entrata della tabella di livello 4 di ogni processo ed è inizializzata dal boot loader all'avvio della macchina virtuale.
 Grazie a questa proprietà, abbiamo potuto effettuare una prima ottimizzazione rispetto alla versione di KAISER proposta da \textcite{gruss:kaslr}: invece di creare lo spazio d'indirizzamento shadow a partire dalla tabella di livello 4, nel nostro sistema viene costruita a partire dalla \emph{tabella di livello 3}.
-Al momento del passaggio nelle funzioni trampolino, il sistema modificherà la prima entrata della tabella di livello 4 del processo in esecuzione invece del registro CR4, inserendovi l'indirizzo della tabella di livello 3 "kernel" (se il processore sta passando a livello sistema) o "shadow" (se sta tornando a livello utente).
+Al momento del passaggio nelle funzioni trampolino, il sistema modificherà la prima entrata della tabella di livello 4 del processo in esecuzione invece del registro CR3, inserendovi l'indirizzo della tabella di livello 3 "kernel" (se il processore sta passando a livello sistema) o "shadow" (se sta tornando a livello utente).
 
-Oltre al risparmio di spazio per avere una tabella duplicata in meno, questa ottimizzazione evita lo svuotamento implicito del \emph{Translation Lookaside Buffer} (TLB) dovuto alla modifica del registro CR4~\cite{gruss:kaslr}, che avrebbe avuto un impatto negativo sulle prestazioni. 
+Oltre al risparmio di spazio per avere una tabella duplicata in meno, questa ottimizzazione evita lo svuotamento implicito del \emph{Translation Lookaside Buffer} (TLB) dovuto alla modifica del registro CR3~\cite{gruss:kaslr}, che avrebbe avuto un impatto negativo sulle prestazioni. 
 Nella proposta di \textcite{gruss:kaslr}, questo problema veniva risolto sfruttando alcune funzionalità delle CPU moderne di cui non disponiamo nel nostro sistema emulato.
 
 \section{La memoria kernel nello spazio shadow}

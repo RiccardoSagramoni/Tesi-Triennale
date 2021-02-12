@@ -137,7 +137,7 @@ void mappa_modulo_sistema_trampolino_in_shadow (faddr tabFM)
 	}
 }
 
-void crea_finestra_FM_shadow (faddr tab4)
+void crea_finestra_FM_shadow ()
 {
 	faddr tab3_shadow = crea_tab3_shadow();
 	
@@ -156,7 +156,7 @@ bool crea_finestra_FM(faddr tab4)
 	faddr boot_dir = readCR3();
 	copy_des(boot_dir, tab4, I_SIS_C, N_SIS_C);
 	
-	crea_finestra_FM_shadow(tab4);
+	crea_finestra_FM_shadow();
 
 	// Salva la tab_entry relativa alla finestra di memoria in
 	// modalita' kernel, nella memoria trampolino
